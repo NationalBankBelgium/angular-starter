@@ -20,6 +20,7 @@ const ScriptExtHtmlWebpackPlugin = require('script-ext-html-webpack-plugin');
 const ngcWebpack = require('ngc-webpack');
 const NoEmitOnErrorsPlugin = require("webpack/lib/NoEmitOnErrorsPlugin");
 const WebpackSHAHash = require("webpack-sha-hash");
+const ContextReplacementPlugin = require("webpack/lib/ContextReplacementPlugin");
 
 const buildUtils = require('./build-utils');
 
@@ -385,6 +386,16 @@ module.exports = function (options) {
       new WebpackSHAHash(),
 
       /**
+       * Plugin: ContextReplacementPlugin
+       * Description: allows to override the inferred information in a 'require' context
+       * Including only a certain set of Moment locales
+       *
+       * See: https://webpack.js.org/plugins/context-replacement-plugin/
+       */
+      // TODO Change with moment-locales-webpack-plugin
+      new ContextReplacementPlugin(/moment[\/\\]locale$/, /(de|fr|en-gb|nl|nl-be)\.js/),
+
+      /**
        * Plugin: HtmlWebpackPlugin
        * Description: Simplifies creation of HTML files to serve your webpack bundles.
        * This is especially useful for webpack bundles that include a hash in the filename
@@ -416,12 +427,13 @@ module.exports = function (options) {
        *
        * See: https://github.com/numical/script-ext-html-webpack-plugin
        */
-      new ScriptExtHtmlWebpackPlugin({
-        sync: /inline|polyfills|vendor/,
-        defaultAttribute: 'async',
-        preload: [/polyfills|vendor|main/],
-        prefetch: [/chunk/]
-      }),
+      // TODO evaluate this
+      // new ScriptExtHtmlWebpackPlugin({
+      //   sync: /inline|polyfills|vendor/,
+      //   defaultAttribute: 'async',
+      //   preload: [/polyfills|vendor|main/],
+      //   prefetch: [/chunk/]
+      // }),
 
       /**
        * Plugin: HtmlElementsPlugin
@@ -445,17 +457,12 @@ module.exports = function (options) {
        *
        * Dependencies: HtmlWebpackPlugin
        */
-      new HtmlElementsPlugin({
-        headTags: require('./head-config.common')
-      }),
+      // TODO implement this
+      // new HtmlElementsPlugin({
+      //   headTags: require('./head-config.common')
+      // }),
 
-      /**
-       * Plugin LoaderOptionsPlugin (experimental)
-       *
-       * See: https://gist.github.com/sokra/27b24881210b56bbaff7
-       */
-      new LoaderOptionsPlugin({}),
-
+      // TODO need to be investiged
       new ngcWebpack.NgcWebpackPlugin(ngcWebpackConfig.plugin),
 
       /**
@@ -464,19 +471,20 @@ module.exports = function (options) {
        *
        * https://github.com/szrenwei/inline-manifest-webpack-plugin
        */
-      new InlineManifestWebpackPlugin(),
+      // TODO evaluate this
+      // new InlineManifestWebpackPlugin(),
     ],
 
     /**
      * Include polyfills or mocks for various node stuff
      * Description: Node configuration
      *
-     * See: https://webpack.github.io/docs/configuration.html#node
+     * See: https://webpack.js.org/configuration/node
      */
     node: {
       global: true,
-      crypto: 'empty',
-      process: true,
+      process: false,
+      crypto: "empty",
       module: false,
       clearImmediate: false,
       setImmediate: false

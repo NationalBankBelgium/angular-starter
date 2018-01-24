@@ -8,13 +8,14 @@
   <meta name="description" content="<%= htmlWebpackPlugin.options.title %>">
   <!-- base url -->
   <base href="<%= htmlWebpackPlugin.options.metadata.baseUrl %>">
-  <% if (webpackConfig.htmlElements.headTags) { %>
+  <!--TODO uncomment this when HtmlElementsPlugin is enabled -->
+  <!--< % if (webpackConfig.htmlElements.headTags) { % >-->
   <!-- Configured Head Tags  -->
-  <%= webpackConfig.htmlElements.headTags %>
-  <% } %>
+  <!--< % = webpackConfig.htmlElements.headTags % >-->
+  <!--< % } % >-->
 
 
-  <%= htmlWebpackPlugin.files.webpackManifest %>
+  <!--< &= htmlWebpackPlugin.files.webpackManifest & >-->
 
   <% if (htmlWebpackPlugin.options.metadata.isDevServer && htmlWebpackPlugin.options.metadata.HMR !== true) { %>
   <!-- Webpack Dev Server reload -->
