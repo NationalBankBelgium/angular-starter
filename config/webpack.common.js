@@ -19,6 +19,7 @@ const LoaderOptionsPlugin = require('webpack/lib/LoaderOptionsPlugin');
 const ScriptExtHtmlWebpackPlugin = require('script-ext-html-webpack-plugin');
 const ngcWebpack = require('ngc-webpack');
 const NoEmitOnErrorsPlugin = require("webpack/lib/NoEmitOnErrorsPlugin");
+const WebpackSHAHash = require("webpack-sha-hash");
 
 const buildUtils = require('./build-utils');
 
@@ -375,6 +376,13 @@ module.exports = function (options) {
         ],
         {}
       ),
+
+      /**
+       * Plugin: WebpackSHAHash
+       * Description: Generate SHA content hashes
+       * See: https://www.npmjs.com/package/webpack-sha-hash
+       */
+      new WebpackSHAHash(),
 
       /**
        * Plugin: HtmlWebpackPlugin
