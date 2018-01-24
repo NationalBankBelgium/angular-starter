@@ -153,6 +153,7 @@ module.exports = function (options) {
          * Returns compiled css content as string
          *
          */
+        // TODO Check if this loader is needed for Angular Material components
         {
           test: /\.scss$/,
           use: ['to-string-loader', 'css-loader', 'sass-loader'],
