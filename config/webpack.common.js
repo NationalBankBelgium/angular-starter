@@ -36,7 +36,7 @@ module.exports = function (options) {
 
   const entry = {
     polyfills: './src/polyfills.browser.ts',
-    main:      './src/main.browser.ts'
+    main: './src/main.browser.ts'
   };
 
   Object.assign(ngcWebpackConfig.plugin, {
@@ -59,7 +59,7 @@ module.exports = function (options) {
      * See: http://webpack.github.io/docs/configuration.html#resolve
      */
     resolve: {
-      mainFields: [ ...(supportES2015 ? ['es2015'] : []), 'browser', 'module', 'main' ],
+      mainFields: [...(supportES2015 ? ['es2015'] : []), 'browser', 'module', 'main'],
 
       /**
        * An array of extensions that should be used to resolve modules.
@@ -293,35 +293,102 @@ module.exports = function (options) {
         minChunks: 2
       }),
 
-
       /**
        * Plugin: CopyWebpackPlugin
        * Description: Copy files and directories in webpack.
-       *
        * Copies project static assets.
        *
        * See: https://www.npmjs.com/package/copy-webpack-plugin
        */
-      new CopyWebpackPlugin([
-        { from: 'src/assets', to: 'assets' },
-        { from: 'src/meta'}
-      ],
-        isProd ? { ignore: [ 'mock-data/**/*' ] } : undefined
+      new CopyWebpackPlugin(
+        [
+          // TODO uncomment this when is part of Stark
+          // // Stark assets
+          // {
+          //   from: helpers.rootStark("assets"),
+          //   to: "assets"
+          // },
+          // // those assets are copied to the root of the target folder
+          // {
+          //   from: helpers.rootStark("assets-base"),
+          //   to: ""
+          // },
+
+          // Mdi svg file
+          {
+            from: "node_modules/@nationalbankbelgium/angular-mdi-svg/mdi.svg",
+            to: "assets/icons/mdi.svg"
+          },
+
+          // Application assets
+          {
+            from: helpers.root("assets"),
+            to: "assets",
+            force: "true" // overwrite files already copied from Stark
+          },
+          // those assets are copied to the root of the target folder
+          {
+            from: helpers.root("assets-base"),
+            to: "",
+            force: "true" // overwrite files already copied from Stark
+          }
+        ],
+        {
+          ignore: [
+            "translations/*", // skip translation since they will be copied in the next round (see block below)
+            "*.md",
+            //See https://github.com/kevlened/copy-webpack-plugin/issues/54#issuecomment-223205388
+            {
+              dot: true,
+              glob: ".svn/**/*"
+            }
+          ]
+
+          // By default the plugin only copies modified files during
+          // a watch or webpack-dev-server build
+          // Setting this to true copies all files
+          // copyUnmodified: true
+        }
       ),
 
-      /*
-      * Plugin: HtmlWebpackPlugin
-      * Description: Simplifies creation of HTML files to serve your webpack bundles.
-      * This is especially useful for webpack bundles that include a hash in the filename
-      * which changes every compilation.
-      *
-      * See: https://github.com/ampedandwired/html-webpack-plugin
-      */
+      /**
+       * Plugin: CopyWebpackPlugin
+       * Description: Copy files and directories in webpack.
+       * Copies project static assets.
+       *
+       * See: https://www.npmjs.com/package/copy-webpack-plugin
+       */
+      new CopyWebpackPlugin(
+        [
+          // TODO uncomment this when is part of Stark
+          // // Stark assets
+          // {
+          //   from: helpers.rootStark("assets/translations"),
+          //   to: "assets/translations/stark"
+          // },
+
+          // Application assets
+          {
+            from: helpers.root("assets/translations"),
+            to: "assets/translations/app"
+          }
+        ],
+        {}
+      ),
+
+      /**
+       * Plugin: HtmlWebpackPlugin
+       * Description: Simplifies creation of HTML files to serve your webpack bundles.
+       * This is especially useful for webpack bundles that include a hash in the filename
+       * which changes every compilation.
+       *
+       * See: https://github.com/ampedandwired/html-webpack-plugin
+       */
       new HtmlWebpackPlugin({
         template: 'src/index.html',
         title: METADATA.title,
         chunksSortMode: function (a, b) {
-          const entryPoints = ["inline","polyfills","sw-register","styles","vendor","main"];
+          const entryPoints = ["inline", "polyfills", "sw-register", "styles", "vendor", "main"];
           return entryPoints.indexOf(a.names[0]) - entryPoints.indexOf(b.names[0]);
         },
         metadata: METADATA,
@@ -334,7 +401,7 @@ module.exports = function (options) {
         } : false
       }),
 
-       /**
+      /**
        * Plugin: ScriptExtHtmlWebpackPlugin
        * Description: Enhances html-webpack-plugin functionality
        * with different deployment options for your scripts including:
