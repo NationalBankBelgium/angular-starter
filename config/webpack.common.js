@@ -18,6 +18,7 @@ const InlineManifestWebpackPlugin = require('inline-manifest-webpack-plugin');
 const LoaderOptionsPlugin = require('webpack/lib/LoaderOptionsPlugin');
 const ScriptExtHtmlWebpackPlugin = require('script-ext-html-webpack-plugin');
 const ngcWebpack = require('ngc-webpack');
+const NoEmitOnErrorsPlugin = require("webpack/lib/NoEmitOnErrorsPlugin");
 
 const buildUtils = require('./build-utils');
 
@@ -223,8 +224,9 @@ module.exports = function (options) {
           use: 'file-loader'
         },
 
-        /* File loader for supporting fonts, for example, in CSS files.
-        */
+        /**
+         *  File loader for supporting fonts, for example, in CSS files.
+         */
         {
           test: /\.(eot|woff2?|svg|ttf)([\?]?.*)$/,
           use: 'file-loader'
@@ -258,6 +260,14 @@ module.exports = function (options) {
       //   'process.env.NODE_ENV': JSON.stringify(METADATA.ENV),
       //   'process.env.HMR': METADATA.HMR
       // }),
+
+      /**
+       * Plugin: NoEmitOnErrorsPlugin
+       * Description: Only emit files when there are no errors.
+       *
+       * See: https://webpack.js.org/plugins/no-emit-on-errors-plugin
+       */
+      new NoEmitOnErrorsPlugin(),
 
       /**
        * Plugin: CommonsChunkPlugin
