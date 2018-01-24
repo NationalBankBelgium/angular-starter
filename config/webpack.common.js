@@ -118,6 +118,22 @@ module.exports = function (options) {
           ]
         },
 
+        // Source map loader support for *.js files
+        // Extracts SourceMaps for source files that as added as sourceMappingURL comment.
+        // reference: https://github.com/webpack/source-map-loader
+        {
+          enforce: "pre",
+          test: /\.js$/,
+          use: [
+            "source-map-loader"
+          ],
+          exclude: [
+            // helpers.rootStark("node_modules/rxjs"),
+            helpers.root("node_modules/rxjs"),
+            helpers.root('node_modules/@angular')
+          ]
+        },
+
         /**
          * To string and css loader support for *.css files (from Angular components)
          * Returns file content as string
@@ -137,6 +153,53 @@ module.exports = function (options) {
         {
           test: /\.scss$/,
           use: ['to-string-loader', 'css-loader', 'sass-loader'],
+          exclude: [helpers.root('src', 'styles')]
+        },
+
+        /**
+         * To string and css and postcss loader support for *.pcss files
+         * Returns compiled css content as string
+         *
+         */
+        {
+          test: /\.pcss$/,
+          use: [
+            "to-string-loader",
+            {
+              loader: "css-loader",
+              options: {
+                //modules: true, // to check if needed
+                //minimize: true,
+                // even if disabled, sourceMaps gets generated
+                sourceMap: false, // true
+                autoprefixer: false,
+                // see https://github.com/webpack-contrib/css-loader#importloaders)
+                importLoaders: 1 // 1 => postcss-loader
+              }
+            },
+            {
+              loader: "postcss-loader",
+              options: {
+                sourceMap: true,
+                plugins: [
+                  // reference: https://github.com/postcss/postcss-import
+                  // https://github.com/postcss/postcss-import/issues/244
+                  require("postcss-import")(),
+
+                  // plugin to rebase, inline or copy on url().
+                  // https://github.com/postcss/postcss-url
+                  require("postcss-url")(),
+
+                  require("postcss-nesting")(),
+                  require("postcss-simple-extend")(),
+                  require("postcss-cssnext")({
+                    // see https://github.com/MoOx/postcss-cssnext/issues/268 for example
+                    browsers: ["last 3 versions", "Chrome >= 45"]
+                  })
+                ]
+              }
+            }
+          ],
           exclude: [helpers.root('src', 'styles')]
         },
 
@@ -177,24 +240,24 @@ module.exports = function (options) {
      * See: http://webpack.github.io/docs/configuration.html#plugins
      */
     plugins: [
-      /**
-       * Plugin: DefinePlugin
-       * Description: Define free variables.
-       * Useful for having development builds with debug logging or adding global constants.
-       *
-       * Environment helpers
-       *
-       * See: https://webpack.github.io/docs/list-of-plugins.html#defineplugin
-       */
-      // NOTE: when adding more properties make sure you include them in custom-typings.d.ts
-      new DefinePlugin({
-        'ENV': JSON.stringify(METADATA.ENV),
-        'HMR': METADATA.HMR,
-        'AOT': METADATA.AOT,
-        'process.env.ENV': JSON.stringify(METADATA.ENV),
-        'process.env.NODE_ENV': JSON.stringify(METADATA.ENV),
-        'process.env.HMR': METADATA.HMR
-      }),
+      // /**
+      //  * Plugin: DefinePlugin
+      //  * Description: Define free variables.
+      //  * Useful for having development builds with debug logging or adding global constants.
+      //  *
+      //  * Environment helpers
+      //  *
+      //  * See: https://webpack.github.io/docs/list-of-plugins.html#defineplugin
+      //  */
+      // // NOTE: when adding more properties make sure you include them in custom-typings.d.ts
+      // new DefinePlugin({
+      //   'ENV': JSON.stringify(METADATA.ENV),
+      //   'HMR': METADATA.HMR,
+      //   'AOT': METADATA.AOT,
+      //   'process.env.ENV': JSON.stringify(METADATA.ENV),
+      //   'process.env.NODE_ENV': JSON.stringify(METADATA.ENV),
+      //   'process.env.HMR': METADATA.HMR
+      // }),
 
       /**
        * Plugin: CommonsChunkPlugin
