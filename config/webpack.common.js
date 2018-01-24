@@ -104,6 +104,20 @@ module.exports = function (options) {
       rules: [
         ...ngcWebpackConfig.loaders,
 
+        // TsLint loader support for *.ts files
+        // reference: https://github.com/wbuchwalter/tslint-loader
+        {
+          enforce: "pre",
+          test: /\.ts$/,
+          use: [
+            "tslint-loader"
+          ],
+          exclude: [
+            helpers.root("node_modules")
+            // helpers.rootStark("node_modules")
+          ]
+        },
+
         /**
          * To string and css loader support for *.css files (from Angular components)
          * Returns file content as string
