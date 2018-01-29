@@ -70,59 +70,8 @@ function rxjsAlias(supportES2015) {
   }
 }
 
-function ngcWebpackSetup(prod, metadata) {
-  if (!metadata) {
-    metadata = DEFAULT_METADATA;
-  }
-
-  const buildOptimizer = prod;
-  const sourceMap = true; // TODO: apply based on tsconfig value?
-  const ngcWebpackPluginOptions = {
-    skipCodeGeneration: !metadata.AOT,
-    sourceMap
-  };
-
-  const environment = getEnvFile(metadata.envFileSuffix);
-  if (environment) {
-    ngcWebpackPluginOptions.hostReplacementPaths = {
-      [helpers.root('src/environments/environment.ts')]: environment
-    }
-  }
-
-  if (!prod && metadata.WATCH) {
-    // Force commonjs module format for TS on dev watch builds.
-    ngcWebpackPluginOptions.compilerOptions = {
-      module: 'commonjs'
-    };
-  }
-
-  const buildOptimizerLoader = {
-    loader: '@angular-devkit/build-optimizer/webpack-loader',
-    options: {
-      sourceMap
-    }
-  };
-
-  const loaders = [
-    {
-      test: /(?:\.ngfactory\.js|\.ngstyle\.js|\.ts)$/,
-      use: metadata.AOT && buildOptimizer ? [ buildOptimizerLoader, '@ngtools/webpack' ] : [ '@ngtools/webpack' ]
-    },
-    ...buildOptimizer
-      ? [ { test: /\.js$/, use: [ buildOptimizerLoader ] } ]
-      : []
-  ];
-
-  return {
-    loaders,
-    plugin: ngcWebpackPluginOptions
-  };
-}
-
-
 exports.DEFAULT_METADATA = DEFAULT_METADATA;
 exports.supportES2015 = supportES2015;
 exports.readTsConfig = readTsConfig;
 exports.getEnvFile = getEnvFile;
 exports.rxjsAlias = rxjsAlias;
-exports.ngcWebpackSetup = ngcWebpackSetup;

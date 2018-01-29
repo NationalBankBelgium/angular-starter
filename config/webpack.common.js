@@ -17,10 +17,11 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const InlineManifestWebpackPlugin = require('inline-manifest-webpack-plugin');
 const LoaderOptionsPlugin = require('webpack/lib/LoaderOptionsPlugin');
 const ScriptExtHtmlWebpackPlugin = require('script-ext-html-webpack-plugin');
-const ngcWebpack = require('ngc-webpack');
+const {AngularCompilerPlugin} = require('@ngtools/webpack');
 const NoEmitOnErrorsPlugin = require("webpack/lib/NoEmitOnErrorsPlugin");
 const WebpackSHAHash = require("webpack-sha-hash");
 const ContextReplacementPlugin = require("webpack/lib/ContextReplacementPlugin");
+// const PurifyPlugin = require('@angular-devkit/build-optimizer').PurifyPlugin; // TODO should we add this plugin?
 
 const buildUtils = require('./build-utils');
 
@@ -33,7 +34,6 @@ const buildUtils = require('./build-utils');
 module.exports = function (options) {
   const isProd = options.env === 'production';
   const METADATA = Object.assign({}, buildUtils.DEFAULT_METADATA, options.metadata || {});
-  const ngcWebpackConfig = buildUtils.ngcWebpackSetup(isProd, METADATA);
   const supportES2015 = buildUtils.supportES2015(METADATA.tsConfigPath);
 
   const entry = {
@@ -41,10 +41,32 @@ module.exports = function (options) {
     main: './src/main.browser.ts'
   };
 
-  Object.assign(ngcWebpackConfig.plugin, {
-    tsConfigPath: METADATA.tsConfigPath,
-    mainPath: entry.main
-  });
+  const environment = buildUtils.getEnvFile(METADATA.envFileSuffix);
+
+  const buildOptimizerLoader = {
+    loader: '@angular-devkit/build-optimizer/webpack-loader',
+    options: {
+      sourceMap: true // TODO: apply based on tsConfig value?
+    }
+  };
+
+  // TODO aparently we don't need babel to make it work in IE
+  // const babelOptions = {
+  //   presets: [
+  //     ["@babel/preset-env", {
+  //       "targets": {
+  //         "browsers": [
+  //           "last 2 versions",
+  //           "ie >= 11",
+  //           "Chrome >= 56",
+  //           "Firefox >= 48",
+  //           "Safari >= 7"
+  //         ]
+  //       },
+  //       "modules": false
+  //     }]
+  //   ]
+  // };
 
   return {
     /**
@@ -105,7 +127,49 @@ module.exports = function (options) {
     module: {
 
       rules: [
-        ...ngcWebpackConfig.loaders,
+        // TODO could we use BuildOptimizer in all environments?
+        {
+          test: /(?:\.ngfactory\.js|\.ngstyle\.js|\.ts)$/,
+          use: METADATA.AOT && isProd ?
+            [
+              buildOptimizerLoader,
+              // {
+              //   loader: "babel-loader",
+              //   options: babelOptions
+              // },
+              '@ngtools/webpack',
+            ] : [
+              // {
+              //   loader: "babel-loader",
+              //   options: babelOptions
+              // },
+              '@ngtools/webpack'
+            ]
+        },
+
+        // use babel in any case for JS
+        ...isProd ? [
+          {
+            test: /\.js$/,
+            use: [
+              buildOptimizerLoader,
+              // {
+              //   loader: "babel-loader",
+              //   options: babelOptions
+              // }
+            ]
+          }
+        ] : [
+          // {
+          //   test: /\.js$/,
+          //   use: [
+          //     {
+          //       loader: "babel-loader",
+          //       options: babelOptions
+          //     }
+          //   ]
+          // }
+        ],
 
         // TsLint loader support for *.ts files
         // reference: https://github.com/wbuchwalter/tslint-loader
@@ -263,6 +327,8 @@ module.exports = function (options) {
       //   'process.env.NODE_ENV': JSON.stringify(METADATA.ENV),
       //   'process.env.HMR': METADATA.HMR
       // }),
+
+      // new PurifyPlugin()  // TODO should we add this plugin?
 
       /**
        * Plugin: NoEmitOnErrorsPlugin
@@ -463,8 +529,20 @@ module.exports = function (options) {
       //   headTags: require('./head-config.common')
       // }),
 
-      // TODO need to be investiged
-      new ngcWebpack.NgcWebpackPlugin(ngcWebpackConfig.plugin),
+      new AngularCompilerPlugin({
+        mainPath: entry.main,
+        platform: 0,  // 0 = browser, 1 = server
+        // entryModule: 'path/to/app.module#AppModule', // TODO not used, probably already defined in the main.browser.ts?
+        hostReplacementPaths: {
+          [helpers.root('src/environments/environment.ts')]: environment
+        },
+        sourceMap: true, // TODO: apply based on tsConfig value?
+        tsConfigPath: METADATA.tsConfigPath,
+        skipCodeGeneration: !METADATA.AOT,
+        compilerOptions: {
+          module: !isProd && METADATA.WATCH ? 'commonjs' : 'es2015' // TODO is it needed in our case? => Force commonjs module format for TS on dev watch builds.
+        }
+      })
 
       /**
        * Plugin: InlineManifestWebpackPlugin
