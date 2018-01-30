@@ -50,24 +50,6 @@ module.exports = function (options) {
     }
   };
 
-  // TODO aparently we don't need babel to make it work in IE
-  // const babelOptions = {
-  //   presets: [
-  //     ["@babel/preset-env", {
-  //       "targets": {
-  //         "browsers": [
-  //           "last 2 versions",
-  //           "ie >= 11",
-  //           "Chrome >= 56",
-  //           "Firefox >= 48",
-  //           "Safari >= 7"
-  //         ]
-  //       },
-  //       "modules": false
-  //     }]
-  //   ]
-  // };
-
   return {
     /**
      * The entry point for the bundle
@@ -133,43 +115,20 @@ module.exports = function (options) {
           use: METADATA.AOT && isProd ?
             [
               buildOptimizerLoader,
-              // {
-              //   loader: "babel-loader",
-              //   options: babelOptions
-              // },
               '@ngtools/webpack',
             ] : [
-              // {
-              //   loader: "babel-loader",
-              //   options: babelOptions
-              // },
               '@ngtools/webpack'
             ]
         },
 
-        // use babel in any case for JS
         ...isProd ? [
           {
             test: /\.js$/,
             use: [
               buildOptimizerLoader,
-              // {
-              //   loader: "babel-loader",
-              //   options: babelOptions
-              // }
             ]
           }
-        ] : [
-          // {
-          //   test: /\.js$/,
-          //   use: [
-          //     {
-          //       loader: "babel-loader",
-          //       options: babelOptions
-          //     }
-          //   ]
-          // }
-        ],
+        ] : [],
 
         // TsLint loader support for *.ts files
         // reference: https://github.com/wbuchwalter/tslint-loader
