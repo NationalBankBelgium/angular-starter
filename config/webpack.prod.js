@@ -46,7 +46,7 @@ function getUglifyOptions (supportES2015) {
   };
 }
 
-module.exports = function (env) {
+module.exports = function () {
   const ENV = process.env.NODE_ENV = process.env.ENV = 'production';
   const supportES2015 = buildUtils.supportES2015(buildUtils.DEFAULT_METADATA.tsConfigPath);
   const METADATA = Object.assign({}, buildUtils.DEFAULT_METADATA, {
@@ -59,7 +59,7 @@ module.exports = function (env) {
   // set environment suffix so these environments are loaded.
   METADATA.envFileSuffix = METADATA.E2E ? 'e2e.prod' : 'prod';
 
-  return webpackMerge(commonConfig({ env: ENV, metadata: METADATA }), {
+  return webpackMerge(commonConfig({ ENV: ENV, metadata: METADATA }), {
 
     /**
      * Options affecting the output of the compilation.

@@ -14,26 +14,46 @@ const LoaderOptionsPlugin = require('webpack/lib/LoaderOptionsPlugin');
 const NamedModulesPlugin = require('webpack/lib/NamedModulesPlugin');
 const EvalSourceMapDevToolPlugin = require('webpack/lib/EvalSourceMapDevToolPlugin');
 
+// Dev custom config
+const webpackCustomConfig = require(helpers.root("app-config/webpack-custom-config.dev.json"));
 
 /**
  * Webpack configuration
  *
  * See: http://webpack.github.io/docs/configuration.html#cli
  */
-module.exports = function (options) {
+module.exports = function () {
   const ENV = process.env.ENV = process.env.NODE_ENV = 'development';
   const HOST = process.env.HOST || 'localhost';
   const PORT = process.env.PORT || 3000;
 
   const METADATA = Object.assign({}, buildUtils.DEFAULT_METADATA, {
-    host: HOST,
-    port: PORT,
+    HOST: HOST,
+    PORT: PORT,
     ENV: ENV,
     HMR: helpers.hasProcessFlag('hot'),
-    PUBLIC: process.env.PUBLIC_DEV || HOST + ':' + PORT
+    // PUBLIC: process.env.PUBLIC_DEV || HOST + ':' + PORT  // TODO check if needed/useful in our case?
   });
 
-  return webpackMerge(commonConfig({ env: ENV, metadata: METADATA  }), {
+  // Directives to be used in CSP header
+  const cspDirectives = [
+    "base-uri 'self'",
+    "default-src 'self'",
+    "child-src 'self'",
+    "connect-src 'self' ws://" + METADATA.HOST + ":" + METADATA.PORT + " " + webpackCustomConfig["cspConnectSrc"], // ws://HOST:PORT" is due to Webpack
+    "font-src 'self'",
+    "form-action 'self' " + webpackCustomConfig["cspFormAction"],
+    "frame-src 'self'",   // deprecated. Use child-src instead. Used here because child-src is not yet supported by Firefox. Remove as soon as it is fully supported
+    "frame-ancestors 'none'",  // the app will not be allowed to be embedded in an iframe (roughly equivalent to X-Frame-Options: DENY)
+    "img-src 'self'",
+    "media-src 'self'",
+    "object-src 'self'",
+    "plugin-types application/pdf",  // valid mime-types for plugins invoked via <object> and <embed>
+    "script-src 'self'",
+    "style-src 'self'"
+  ];
+
+  return webpackMerge(commonConfig({ENV: ENV, metadata: METADATA}), {
     /**
      * Options affecting the output of the compilation.
      *
@@ -126,7 +146,7 @@ module.exports = function (options) {
        */
       new LoaderOptionsPlugin({
         debug: true,
-        options: { }
+        options: {}
       }),
 
       // TODO: HMR
@@ -141,43 +161,75 @@ module.exports = function (options) {
      * See: https://webpack.github.io/docs/webpack-dev-server.html
      */
     devServer: {
-      port: METADATA.port,
-      host: METADATA.host,
+      port: METADATA.PORT,
+      host: METADATA.HOST,
       hot: METADATA.HMR,
-      public: METADATA.PUBLIC,
+      inline: true,
+      compress: true,
+      overlay: {
+        errors: false,
+        warnings: false
+      },
+      // public: METADATA.PUBLIC, // TODO check if needed/useful in our case?
+
+      // HTML5 History API support: no need for # in URLs
+      // automatically redirect 404 errors to the index.html page
+      // uses connect-history-api-fallback behind the scenes: https://github.com/bripkens/connect-history-api-fallback
+      // reference: http://jaketrent.com/post/pushstate-webpack-dev-server/
       historyApiFallback: true,
+
+      // Due to a security fix of Webpack Server, we enable this option to permit the access to the application when running on 0.0.0.0
+      // reference: https://github.com/webpack/webpack-dev-server/releases/tag/v2.4.3
+      disableHostCheck: true,
+
+      // file watch configuration
+      // reference: https://webpack.js.org/configuration/watch/
       watchOptions: {
         // if you're using Docker you may need this
-        // aggregateTimeout: 300,
-        // poll: 1000,
-        ignored: /node_modules/
+        aggregateTimeout: 300,
+        poll: 1000,
+        // ignored: /node_modules/ // node_modules should also be watched for any changes in @nationalbankbelgium
       },
+      // TODO: to enable this we should make Webpack to write dist files to disk
+      // contentBase: helpers.root("dist"), // necessary so that all the content is available (e.g., app assets, stark assets, ...)
+
       /**
-      * Here you can access the Express app object and add your own custom middleware to it.
-      *
-      * See: https://webpack.github.io/docs/webpack-dev-server.html
-      */
-      setup: function(app) {
+       * Here you can access the Express app object and add your own custom middleware to it.
+       *
+       * See: https://webpack.github.io/docs/webpack-dev-server.html
+       */
+      setup: function (app) {
         // For example, to define custom handlers for some paths:
         // app.get('/some/path', function(req, res) {
         //   res.json({ custom: 'response' });
         // });
-      }
-    },
+      },
 
-    /**
-     * Include polyfills or mocks for various node stuff
-     * Description: Node configuration
-     *
-     * See: https://webpack.github.io/docs/configuration.html#node
-     */
-    node: {
-      global: true,
-      crypto: 'empty',
-      process: true,
-      module: false,
-      clearImmediate: false,
-      setImmediate: false
+      // Can be used to add specific headers
+      headers: {
+        // enable CORS
+        "Access-Control-Allow-Origin": "*",
+
+        // TODO: enable CSP
+        // CSP header (and its variants per browser)
+        // "Content-Security-Policy": cspDirectives.join(" ; "),
+        // "X-Content-Security-Policy": cspDirectives.join(" ; "),
+        // "X-WebKit-CSP": cspDirectives.join(" ; "),
+
+        // Other security headers
+
+        // protect against clickjacking: https://en.wikipedia.org/wiki/Clickjacking
+        // reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/X-Frame-Options
+        "X-Frame-Options": "deny",
+
+        // enable some protection against XSS
+        // reference: https://www.owasp.org/index.php/List_of_useful_HTTP_headers
+        "X-Xss-Protection": "1; mode=block",
+
+        // protect against drive-by download attacks and user uploaded content that could be treated by Internet Explorer as executable or dynamic HTML files
+        // reference: https://www.owasp.org/index.php/List_of_useful_HTTP_headers
+        "X-Content-Type-Options": "nosniff"
+      }
     }
 
   });

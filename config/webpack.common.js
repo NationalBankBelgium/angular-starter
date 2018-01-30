@@ -25,6 +25,10 @@ const ContextReplacementPlugin = require("webpack/lib/ContextReplacementPlugin")
 
 const buildUtils = require('./build-utils');
 
+// Metadata
+const starkAppMetadata = require(helpers.root("src/stark-app-metadata.json"));
+const starkAppConfig = require(helpers.root("src/stark-app-config.json"));
+
 
 /**
  * Webpack configuration
@@ -32,7 +36,7 @@ const buildUtils = require('./build-utils');
  * See: http://webpack.github.io/docs/configuration.html#cli
  */
 module.exports = function (options) {
-  const isProd = options.env === 'production';
+  const isProd = options.ENV === 'production';
   const METADATA = Object.assign({}, buildUtils.DEFAULT_METADATA, options.metadata || {});
   const supportES2015 = buildUtils.supportES2015(METADATA.tsConfigPath);
 
@@ -437,8 +441,10 @@ module.exports = function (options) {
           return entryPoints.indexOf(a.names[0]) - entryPoints.indexOf(b.names[0]);
         },
         metadata: METADATA,
-        inject: 'body',
-        xhtml: true,
+        inject: 'body', //  true (default) or  "body" are the same
+        starkAppMetadata: starkAppMetadata,
+        starkAppConfig: starkAppConfig,
+        // xhtml: true, // TODO: why XHTML?
         minify: isProd ? {
           caseSensitive: true,
           collapseWhitespace: true,
