@@ -38,7 +38,7 @@ module.exports = function () {
   // Directives to be used in CSP header
   const cspDirectives = [
     "base-uri 'self'",
-    "default-src 'self'",
+    // "default-src 'self'", // FIXME: enable as soon as the issue is fixed in Angular (https://github.com/angular/angular-cli/issues/6872 )
     "child-src 'self'",
     "connect-src 'self' ws://" + METADATA.HOST + ":" + METADATA.PORT + " " + webpackCustomConfig["cspConnectSrc"], // ws://HOST:PORT" is due to Webpack
     "font-src 'self'",
@@ -49,11 +49,35 @@ module.exports = function () {
     "media-src 'self'",
     "object-src 'self'",
     "plugin-types application/pdf",  // valid mime-types for plugins invoked via <object> and <embed>
-    "script-src 'self'",
-    "style-src 'self'"
+    // "script-src 'self'", // FIXME: enable as soon as the issue is fixed in Angular (https://github.com/angular/angular-cli/issues/6872 )
+    // "style-src 'self' 'nonce-cef324d21ec5483c8819cc7a5e33c4a2'" // we define the same nonce value as in the style-loader
   ];
 
   return webpackMerge(commonConfig({ENV: ENV, metadata: METADATA}), {
+
+    stats: {
+      colors: true,
+      reasons: true,
+      errorDetails: true // display error details. Same as the --show-error-details flag
+      // maxModules: Infinity, // examine all modules (ModuleConcatenationPlugin debugging)
+      // optimizationBailout: true  // display bailout reasons (ModuleConcatenationPlugin debugging)
+    },
+
+    /**
+     * Developer tool to enhance debugging
+     * reference: https://webpack.js.org/configuration/devtool
+     * reference: https://github.com/webpack/docs/wiki/build-performance#sourcemaps
+     */
+    // TODO: Replace this by EvalSourceMapDevToolPlugin
+    devtool: "cheap-module-source-map", // "cheap-module-eval-source-map",
+
+    /**
+     * Tell webpack which environment the application is targeting.
+     * reference: https://webpack.js.org/configuration/target/
+     * reference: https://webpack.js.org/concepts/targets/
+     */
+    target: "web", // <== can be omitted as default is "web"
+
     /**
      * Options affecting the output of the compilation.
      *
@@ -106,7 +130,10 @@ module.exports = function () {
          */
         {
           test: /\.css$/,
-          use: ['style-loader', 'css-loader'],
+          use: [
+            { loader: 'style-loader', options: { attrs: { nonce: 'cef324d21ec5483c8819cc7a5e33c4a2' } } },
+            'css-loader'
+          ],
           include: [helpers.root('src', 'styles')]
         },
 
@@ -117,7 +144,11 @@ module.exports = function () {
          */
         {
           test: /\.scss$/,
-          use: ['style-loader', 'css-loader', 'sass-loader'],
+          use: [
+            { loader: 'style-loader', options: { attrs: { nonce: 'cef324d21ec5483c8819cc7a5e33c4a2' } } },
+            'css-loader',
+            'sass-loader'
+          ],
           include: [helpers.root('src', 'styles')]
         },
 
@@ -126,10 +157,12 @@ module.exports = function () {
     },
 
     plugins: [
-      new EvalSourceMapDevToolPlugin({
-        moduleFilenameTemplate: '[resource-path]',
-        sourceRoot: 'webpack:///'
-      }),
+      // TODO: we should use this plugin instead of 'devtool' but providing the same options)
+      // See: https://webpack.js.org/plugins/eval-source-map-dev-tool-plugin/
+      // new EvalSourceMapDevToolPlugin({
+      //   moduleFilenameTemplate: '[resource-path]',
+      //   sourceRoot: 'webpack:///'
+      // }),
 
       /**
        * Plugin: NamedModulesPlugin (experimental)
@@ -212,9 +245,9 @@ module.exports = function () {
 
         // TODO: enable CSP
         // CSP header (and its variants per browser)
-        // "Content-Security-Policy": cspDirectives.join(" ; "),
-        // "X-Content-Security-Policy": cspDirectives.join(" ; "),
-        // "X-WebKit-CSP": cspDirectives.join(" ; "),
+        "Content-Security-Policy": cspDirectives.join(" ; "),
+        "X-Content-Security-Policy": cspDirectives.join(" ; "),
+        "X-WebKit-CSP": cspDirectives.join(" ; "),
 
         // Other security headers
 
