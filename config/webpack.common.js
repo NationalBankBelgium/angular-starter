@@ -114,6 +114,8 @@ module.exports = function (options) {
 
       rules: [
         // TODO could we use BuildOptimizer in all environments?
+        // BuildOptimizer should only be used with AOT
+        // see https://github.com/angular/angular-cli/issues/8594
         {
           test: /(?:\.ngfactory\.js|\.ngstyle\.js|\.ts)$/,
           use: METADATA.AOT && isProd ?
@@ -125,7 +127,7 @@ module.exports = function (options) {
             ]
         },
 
-        ...isProd ? [
+        ...isProd && METADATA.AOT ? [
           {
             test: /\.js$/,
             use: [
