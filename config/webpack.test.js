@@ -10,6 +10,7 @@ const helpers = require('./helpers');
 const ProvidePlugin = require('webpack/lib/ProvidePlugin');
 const DefinePlugin = require('webpack/lib/DefinePlugin');
 const LoaderOptionsPlugin = require('webpack/lib/LoaderOptionsPlugin');
+const SourceMapDevToolPlugin = require('webpack/lib/SourceMapDevToolPlugin');
 const ContextReplacementPlugin = require('webpack/lib/ContextReplacementPlugin');
 
 /**
@@ -24,14 +25,6 @@ const ENV = process.env.ENV = process.env.NODE_ENV = 'test';
  */
 module.exports = function () {
   return {
-
-    /**
-     * Source map for Karma from the help of karma-sourcemap-loader &  karma-webpack
-     *
-     * Do not change, leave as is or it wont work.
-     * See: https://github.com/webpack/karma-webpack#source-maps
-     */
-    devtool: 'inline-source-map',
 
     /**
      * Options affecting the resolving of modules.
@@ -135,9 +128,9 @@ module.exports = function () {
          * See: https://github.com/webpack/raw-loader
          */
         {
-            test: /\.scss$/,
-            loader: ['raw-loader', 'sass-loader'],
-            exclude: [helpers.root('src/index.html')]
+          test: /\.scss$/,
+          loader: ['raw-loader', 'sass-loader'],
+          exclude: [helpers.root('src/index.html')]
         },
 
         /**
@@ -225,6 +218,29 @@ module.exports = function () {
      * See: http://webpack.github.io/docs/configuration.html#plugins
      */
     plugins: [
+
+      /**
+       * Plugin: SourceMapDevToolPlugin
+       * Description: enables more fine grained control of source map generation
+       * See: https://webpack.js.org/plugins/source-map-dev-tool-plugin/
+       *
+       * Do not change, leave as is or it wont work.
+       * This config gives the same results as using devtool: "devtool: 'inline-source-map'".
+       * Source map for Karma from the help of karma-sourcemap-loader & karma-webpack
+       * A SourceMap is added as a DataUrl to the bundle.
+       * See: https://webpack.js.org/configuration/devtool
+       * See: https://github.com/webpack/karma-webpack#source-maps
+       *
+       * IMPORTANT: this should be used instead of EvalSourceMapDevToolPlugin to avoid using eval() which violates CSP
+       */
+      new SourceMapDevToolPlugin({
+        // filename: not provided so the source map will be inlined
+        moduleFilenameTemplate: '[resource-path]',
+        fallbackModuleFilenameTemplate: "[resource-path]?[hash]",
+        module: true, // default: true
+        columns: true, // default: true
+        sourceRoot: 'webpack:///'
+      }),
 
       /**
        * Plugin: DefinePlugin
