@@ -12,7 +12,7 @@ const commonConfig = require('./webpack.common.js'); // the settings that are co
  */
 const LoaderOptionsPlugin = require('webpack/lib/LoaderOptionsPlugin');
 const NamedModulesPlugin = require('webpack/lib/NamedModulesPlugin');
-const EvalSourceMapDevToolPlugin = require('webpack/lib/EvalSourceMapDevToolPlugin');
+const SourceMapDevToolPlugin = require('webpack/lib/SourceMapDevToolPlugin');
 
 // Dev custom config
 const webpackCustomConfig = require(helpers.root("app-config/webpack-custom-config.dev.json"));
@@ -50,7 +50,7 @@ module.exports = function () {
     "object-src 'self'",
     "plugin-types application/pdf",  // valid mime-types for plugins invoked via <object> and <embed>
     // "script-src 'self'", // FIXME: enable as soon as the issue is fixed in Angular (https://github.com/angular/angular-cli/issues/6872 )
-    // "style-src 'self' 'nonce-cef324d21ec5483c8819cc7a5e33c4a2'" // we define the same nonce value as in the style-loader
+    // "style-src 'self' 'nonce-cef324d21ec5483c8819cc7a5e33c4a2'" // we define the same nonce value as in the style-loader // FIXME: DomSharedStylesHost.prototype._addStylesToHost in platform-browser.js adds inline style!
   ];
 
   return webpackMerge(commonConfig({ENV: ENV, metadata: METADATA}), {
@@ -62,14 +62,6 @@ module.exports = function () {
       // maxModules: Infinity, // examine all modules (ModuleConcatenationPlugin debugging)
       // optimizationBailout: true  // display bailout reasons (ModuleConcatenationPlugin debugging)
     },
-
-    /**
-     * Developer tool to enhance debugging
-     * reference: https://webpack.js.org/configuration/devtool
-     * reference: https://github.com/webpack/docs/wiki/build-performance#sourcemaps
-     */
-    // TODO: Replace this by EvalSourceMapDevToolPlugin
-    devtool: "cheap-module-source-map", // "cheap-module-eval-source-map",
 
     /**
      * Tell webpack which environment the application is targeting.
@@ -131,7 +123,7 @@ module.exports = function () {
         {
           test: /\.css$/,
           use: [
-            { loader: 'style-loader', options: { attrs: { nonce: 'cef324d21ec5483c8819cc7a5e33c4a2' } } },
+            {loader: 'style-loader', options: {attrs: {nonce: 'cef324d21ec5483c8819cc7a5e33c4a2'}}},
             'css-loader'
           ],
           include: [helpers.root('src', 'styles')]
@@ -145,7 +137,7 @@ module.exports = function () {
         {
           test: /\.scss$/,
           use: [
-            { loader: 'style-loader', options: { attrs: { nonce: 'cef324d21ec5483c8819cc7a5e33c4a2' } } },
+            {loader: 'style-loader', options: {attrs: {nonce: 'cef324d21ec5483c8819cc7a5e33c4a2'}}},
             'css-loader',
             'sass-loader'
           ],
@@ -157,12 +149,25 @@ module.exports = function () {
     },
 
     plugins: [
-      // TODO: we should use this plugin instead of 'devtool' but providing the same options)
-      // See: https://webpack.js.org/plugins/eval-source-map-dev-tool-plugin/
-      // new EvalSourceMapDevToolPlugin({
-      //   moduleFilenameTemplate: '[resource-path]',
-      //   sourceRoot: 'webpack:///'
-      // }),
+      /**
+       * Plugin: SourceMapDevToolPlugin
+       * Description: enables more fine grained control of source map generation
+       * See: https://webpack.js.org/plugins/source-map-dev-tool-plugin/
+       *
+       * This config gives the same results as using devtool: "devtool: 'cheap-module-source-map'"
+       * A SourceMap without column-mappings that simplifies loader Source Maps to a single mapping per line.
+       * See: https://webpack.js.org/configuration/devtool
+       *
+       * IMPORTANT: this should be used instead of EvalSourceMapDevToolPlugin to avoid using eval() which violates CSP
+       */
+      new SourceMapDevToolPlugin({
+        filename: "[file].map[query]",
+        moduleFilenameTemplate: '[resource-path]',
+        fallbackModuleFilenameTemplate: "[resource-path]?[hash]",
+        module: true, // default: true
+        columns: false, // Default: true. False = less accurate source maps but will also improve compilation performance significantly
+        sourceRoot: 'webpack:///'
+      }),
 
       /**
        * Plugin: NamedModulesPlugin (experimental)

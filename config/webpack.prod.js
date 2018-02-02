@@ -6,11 +6,11 @@ const buildUtils = require('./build-utils');
 
 /**
  * Used to merge webpack configs
-*/
+ */
 const webpackMerge = require('webpack-merge');
 /**
  * The settings that are common to prod and dev
-*/
+ */
 const commonConfig = require('./webpack.common.js');
 
 /**
@@ -18,14 +18,13 @@ const commonConfig = require('./webpack.common.js');
  */
 const SourceMapDevToolPlugin = require('webpack/lib/SourceMapDevToolPlugin');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
-const HashedModuleIdsPlugin = require('webpack/lib/HashedModuleIdsPlugin')
+const HashedModuleIdsPlugin = require('webpack/lib/HashedModuleIdsPlugin');
 const PurifyPlugin = require('@angular-devkit/build-optimizer').PurifyPlugin;
 const ModuleConcatenationPlugin = require('webpack/lib/optimize/ModuleConcatenationPlugin');
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 
 
-
-function getUglifyOptions (supportES2015) {
+function getUglifyOptions(supportES2015) {
   const uglifyCompressOptions = {
     pure_getters: true, /* buildOptimizer */
     // PURE comments work best with 3 passes.
@@ -59,7 +58,7 @@ module.exports = function () {
   // set environment suffix so these environments are loaded.
   METADATA.envFileSuffix = METADATA.E2E ? 'e2e.prod' : 'prod';
 
-  return webpackMerge(commonConfig({ ENV: ENV, metadata: METADATA }), {
+  return webpackMerge(commonConfig({ENV: ENV, metadata: METADATA}), {
 
     /**
      * Options affecting the output of the compilation.
@@ -139,11 +138,23 @@ module.exports = function () {
      * See: http://webpack.github.io/docs/configuration.html#plugins
      */
     plugins: [
-
+      /**
+       * Plugin: SourceMapDevToolPlugin
+       * Description: enables more fine grained control of source map generation
+       * See: https://webpack.js.org/plugins/source-map-dev-tool-plugin/
+       *
+       * This config gives the same results as using devtool: "devtool: 'source-map'"
+       * A full SourceMap is emitted as a separate file. It adds a reference comment to the bundle so development tools know where to find it.
+       * See: https://webpack.js.org/configuration/devtool
+       *
+       * IMPORTANT: this should be used instead of EvalSourceMapDevToolPlugin to avoid using eval() which violates CSP
+       */
       new SourceMapDevToolPlugin({
         filename: '[file].map[query]',
         moduleFilenameTemplate: '[resource-path]',
         fallbackModuleFilenameTemplate: '[resource-path]?[hash]',
+        module: true, // default: true
+        columns: true, // default: true
         sourceRoot: 'webpack:///'
       }),
 
@@ -158,6 +169,9 @@ module.exports = function () {
 
       new PurifyPlugin(), /* buildOptimizer */
 
+      /**
+       * See: https://webpack.js.org/plugins/hashed-module-ids-plugin/
+       */
       new HashedModuleIdsPlugin(),
       new ModuleConcatenationPlugin(),
 
