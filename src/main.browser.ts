@@ -10,6 +10,8 @@ import { environment } from 'environments/environment';
  */
 import { AppModule } from './app';
 
+import { hmrBootstrap } from './hmr';
+
 /**
  * Bootstrap our Angular app with a top level NgModule
  */
@@ -31,10 +33,26 @@ switch (document.readyState) {
   case 'interactive':
   case 'complete':
   default:
-    main();
+    if (environment.hmr) {
+      if (module['hot']) {
+        hmrBootstrap(module, main);
+      } else {
+        console.error('HMR is not enabled for webpack-dev-server!');
+      }
+    } else {
+      main();
+    }
 }
 
 function _domReadyHandler() {
- document.removeEventListener('DOMContentLoaded', _domReadyHandler, false);
- main();
+  document.removeEventListener('DOMContentLoaded', _domReadyHandler, false);
+  if (environment.hmr) {
+    if (module['hot']) {
+      hmrBootstrap(module, main);
+    } else {
+      console.error('HMR is not enabled for webpack-dev-server!');
+    }
+  } else {
+    main();
+  }
 }

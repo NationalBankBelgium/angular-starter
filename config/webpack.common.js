@@ -12,7 +12,6 @@ const helpers = require('./helpers');
 const DefinePlugin = require('webpack/lib/DefinePlugin');
 const CommonsChunkPlugin = require('webpack/lib/optimize/CommonsChunkPlugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
-const HtmlElementsPlugin = require('./html-elements-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const InlineManifestWebpackPlugin = require('inline-manifest-webpack-plugin');
 const LoaderOptionsPlugin = require('webpack/lib/LoaderOptionsPlugin');
@@ -21,7 +20,7 @@ const {AngularCompilerPlugin} = require('@ngtools/webpack');
 const NoEmitOnErrorsPlugin = require("webpack/lib/NoEmitOnErrorsPlugin");
 const WebpackSHAHash = require("webpack-sha-hash");
 const ContextReplacementPlugin = require("webpack/lib/ContextReplacementPlugin");
-// const PurifyPlugin = require('@angular-devkit/build-optimizer').PurifyPlugin; // TODO should we add this plugin?
+const PurifyPlugin = require('@angular-devkit/build-optimizer').PurifyPlugin;
 
 const buildUtils = require('./build-utils');
 
@@ -118,7 +117,7 @@ module.exports = function (options) {
         // see https://github.com/angular/angular-cli/issues/8594
         {
           test: /(?:\.ngfactory\.js|\.ngstyle\.js|\.ts)$/,
-          use: METADATA.AOT && isProd ?
+          use: METADATA.AOT ?
             [
               buildOptimizerLoader,
               '@ngtools/webpack',
@@ -127,7 +126,7 @@ module.exports = function (options) {
             ]
         },
 
-        ...isProd && METADATA.AOT ? [
+        ...METADATA.AOT ? [
           {
             test: /\.js$/,
             use: [
@@ -293,7 +292,7 @@ module.exports = function (options) {
       //   'process.env.HMR': METADATA.HMR
       // }),
 
-      // new PurifyPlugin()  // TODO should we add this plugin?
+      new PurifyPlugin(),
 
       /**
        * Plugin: NoEmitOnErrorsPlugin
@@ -467,33 +466,6 @@ module.exports = function (options) {
       //   defaultAttribute: 'async',
       //   preload: [/polyfills|vendor|main/],
       //   prefetch: [/chunk/]
-      // }),
-
-      /**
-       * Plugin: HtmlElementsPlugin
-       * Description: Generate html tags based on javascript maps.
-       *
-       * If a publicPath is set in the webpack output configuration, it will be automatically added to
-       * href attributes, you can disable that by adding a "=href": false property.
-       * You can also enable it to other attribute by settings "=attName": true.
-       *
-       * The configuration supplied is map between a location (key) and an element definition object (value)
-       * The location (key) is then exported to the template under then htmlElements property in webpack configuration.
-       *
-       * Example:
-       *  Adding this plugin configuration
-       *  new HtmlElementsPlugin({
-       *    headTags: { ... }
-       *  })
-       *
-       *  Means we can use it in the template like this:
-       *  <%= webpackConfig.htmlElements.headTags %>
-       *
-       * Dependencies: HtmlWebpackPlugin
-       */
-      // TODO implement this
-      // new HtmlElementsPlugin({
-      //   headTags: require('./head-config.common')
       // }),
 
       new AngularCompilerPlugin({

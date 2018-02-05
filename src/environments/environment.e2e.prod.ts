@@ -7,6 +7,7 @@ enableProdMode();
 
 export const environment: Environment = {
   production: true,
+  hmr: false,
   showDevModule: true,
 
   /** Angular debug tools in the dev console

@@ -9,7 +9,7 @@ require('zone.js/dist/long-stack-trace-zone');
 
 export const environment: Environment = {
   production: false,
-  hmr: false,
+  hmr: true,
   showDevModule: true,
 
   /** Angular debug tools in the dev console
@@ -31,4 +31,5 @@ export const environment: Environment = {
 
   ]
 };
+
 

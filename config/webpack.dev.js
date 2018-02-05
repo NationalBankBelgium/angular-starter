@@ -34,6 +34,7 @@ module.exports = function () {
     PORT: PORT,
     ENV: ENV,
     HMR: helpers.hasProcessFlag('hot'),
+    envFileSuffix: helpers.hasProcessFlag('hot') ? "hmr" : ""
     // PUBLIC: process.env.PUBLIC_DEV || HOST + ':' + PORT  // TODO check if needed/useful in our case?
   });
 
