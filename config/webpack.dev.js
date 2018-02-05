@@ -14,6 +14,8 @@ const LoaderOptionsPlugin = require('webpack/lib/LoaderOptionsPlugin');
 const NamedModulesPlugin = require('webpack/lib/NamedModulesPlugin');
 const SourceMapDevToolPlugin = require('webpack/lib/SourceMapDevToolPlugin');
 
+const WriteFilePlugin = require("write-file-webpack-plugin");
+
 // Dev custom config
 const webpackCustomConfig = require(helpers.root("app-config/webpack-custom-config.dev.json"));
 
@@ -90,7 +92,7 @@ module.exports = function () {
        *
        * See: http://webpack.github.io/docs/configuration.html#output-filename
        */
-      filename: '[name].bundle.js',
+      filename: '[name].[hash].bundle.js',
 
       /**
        * The filename of the SourceMaps for the JavaScript files.
@@ -98,14 +100,14 @@ module.exports = function () {
        *
        * See: http://webpack.github.io/docs/configuration.html#output-sourcemapfilename
        */
-      sourceMapFilename: '[file].map',
+      sourceMapFilename: '[file].[hash].map',
 
       /** The filename of non-entry chunks as relative path
        * inside the output.path directory.
        *
        * See: http://webpack.github.io/docs/configuration.html#output-chunkfilename
        */
-      chunkFilename: '[id].chunk.js',
+      chunkFilename: '[id].[hash].chunk.js',
 
       library: 'ac_[name]',
       libraryTarget: 'var',
@@ -144,6 +146,52 @@ module.exports = function () {
           include: [helpers.root('src', 'styles')]
         },
 
+        /**
+         * PostCSS loader support for *.pcss files (styles directory only)
+         * Loads external sass styles into the DOM, supports HMR
+         *
+         */
+        {
+          test: /\.pcss$/,
+          use: [
+            {loader: 'style-loader', options: {attrs: {nonce: 'cef324d21ec5483c8819cc7a5e33c4a2'}}},
+            {
+              loader: "css-loader",
+              options: {
+                //modules: true, // to check if needed
+                //minimize: true,
+                // even if disabled, sourceMaps gets generated
+                sourceMap: false, // true
+                autoprefixer: false,
+                // see https://github.com/webpack-contrib/css-loader#importloaders)
+                importLoaders: 1 // 1 => postcss-loader
+              }
+            },
+            {
+              loader: "postcss-loader",
+              options: {
+                sourceMap: true,
+                plugins: [
+                  // reference: https://github.com/postcss/postcss-import
+                  // https://github.com/postcss/postcss-import/issues/244
+                  require("postcss-import")(),
+
+                  // plugin to rebase, inline or copy on url().
+                  // https://github.com/postcss/postcss-url
+                  require("postcss-url")(),
+
+                  require("postcss-nesting")(),
+                  require("postcss-simple-extend")(),
+                  require("postcss-cssnext")({
+                    // see https://github.com/MoOx/postcss-cssnext/issues/268 for example
+                    browsers: ["last 3 versions", "Chrome >= 45"]
+                  })
+                ]
+              }
+            }
+          ],
+          include: [helpers.root('src', 'styles')]
+        }
       ]
 
     },
@@ -186,6 +234,14 @@ module.exports = function () {
         debug: true,
         options: {}
       }),
+
+      /**
+       * Plugin: WriteFilePlugin
+       * Description: This plugin makes sure that bundles and assets are written to disk
+       * this is necessary so that assets are available in dev mode
+       * See: https://www.npmjs.com/package/write-file-webpack-plugin
+       */
+      new WriteFilePlugin(),
 
       // TODO: HMR
     ],
@@ -271,4 +327,4 @@ module.exports = function () {
     }
 
   });
-}
+};

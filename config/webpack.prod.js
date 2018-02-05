@@ -128,6 +128,52 @@ module.exports = function () {
           include: [helpers.root('src', 'styles')]
         },
 
+        /**
+         * Extract and compile PCSS files from .src/styles directory to external CSS file
+         */
+        {
+          test: /\.pcss$/,
+          loader: ExtractTextPlugin.extract({
+            fallback: 'style-loader',
+            use: [
+              {
+                loader: "css-loader",
+                options: {
+                  //modules: true, // to check if needed
+                  //minimize: true,
+                  // even if disabled, sourceMaps gets generated
+                  sourceMap: false, // true
+                  autoprefixer: false,
+                  // see https://github.com/webpack-contrib/css-loader#importloaders)
+                  importLoaders: 1 // 1 => postcss-loader
+                }
+              },
+              {
+                loader: "postcss-loader",
+                options: {
+                  sourceMap: true,
+                  plugins: [
+                    // reference: https://github.com/postcss/postcss-import
+                    // https://github.com/postcss/postcss-import/issues/244
+                    require("postcss-import")(),
+
+                    // plugin to rebase, inline or copy on url().
+                    // https://github.com/postcss/postcss-url
+                    require("postcss-url")(),
+
+                    require("postcss-nesting")(),
+                    require("postcss-simple-extend")(),
+                    require("postcss-cssnext")({
+                      // see https://github.com/MoOx/postcss-cssnext/issues/268 for example
+                      browsers: ["last 3 versions", "Chrome >= 45"]
+                    })
+                  ]
+                }
+              }
+            ]
+          }),
+          include: [helpers.root('src', 'styles')]
+        }
       ]
 
     },
