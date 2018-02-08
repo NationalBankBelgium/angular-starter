@@ -12,6 +12,7 @@ const webpackMerge = require('webpack-merge');
  * The settings that are common to prod and dev
  */
 const commonConfig = require('./webpack.common.js');
+const commonData = require('./webpack.common-data.js');
 
 /**
  * Webpack Plugins
@@ -152,22 +153,7 @@ module.exports = function () {
                 loader: "postcss-loader",
                 options: {
                   sourceMap: true,
-                  plugins: [
-                    // reference: https://github.com/postcss/postcss-import
-                    // https://github.com/postcss/postcss-import/issues/244
-                    require("postcss-import")(),
-
-                    // plugin to rebase, inline or copy on url().
-                    // https://github.com/postcss/postcss-url
-                    require("postcss-url")(),
-
-                    require("postcss-nesting")(),
-                    require("postcss-simple-extend")(),
-                    require("postcss-cssnext")({
-                      // see https://github.com/MoOx/postcss-cssnext/issues/268 for example
-                      browsers: ["last 3 versions", "Chrome >= 45"]
-                    })
-                  ]
+                  plugins: commonData.postcssPlugins
                 }
               }
             ]
@@ -236,21 +222,5 @@ module.exports = function () {
       })
 
     ],
-
-    /**
-     * Include polyfills or mocks for various node stuff
-     * Description: Node configuration
-     *
-     * See: https://webpack.github.io/docs/configuration.html#node
-     */
-    node: {
-      global: true,
-      crypto: 'empty',
-      process: false,
-      module: false,
-      clearImmediate: false,
-      setImmediate: false
-    }
-
   });
-}
+};

@@ -3,6 +3,7 @@
  */
 
 const helpers = require('./helpers');
+const commonData = require("./webpack.common-data.js"); // common configuration between environments
 
 /**
  * Webpack Plugins
@@ -24,11 +25,6 @@ const ContextReplacementPlugin = require("webpack/lib/ContextReplacementPlugin")
 const PurifyPlugin = require('@angular-devkit/build-optimizer').PurifyPlugin;
 
 const buildUtils = require('./build-utils');
-
-// Metadata
-const starkAppMetadata = require(helpers.root("src/stark-app-metadata.json"));
-const starkAppConfig = require(helpers.root("src/stark-app-config.json"));
-
 
 /**
  * Webpack configuration
@@ -214,22 +210,7 @@ module.exports = function (options) {
               loader: "postcss-loader",
               options: {
                 sourceMap: true,
-                plugins: [
-                  // reference: https://github.com/postcss/postcss-import
-                  // https://github.com/postcss/postcss-import/issues/244
-                  require("postcss-import")(),
-
-                  // plugin to rebase, inline or copy on url().
-                  // https://github.com/postcss/postcss-url
-                  require("postcss-url")(),
-
-                  require("postcss-nesting")(),
-                  require("postcss-simple-extend")(),
-                  require("postcss-cssnext")({
-                    // see https://github.com/MoOx/postcss-cssnext/issues/268 for example
-                    browsers: ["last 3 versions", "Chrome >= 45"]
-                  })
-                ]
+                plugins: commonData.postcssPlugins
               }
             }
           ],
@@ -452,8 +433,8 @@ module.exports = function (options) {
         },
         metadata: METADATA,
         inject: 'body', //  true (default) or  "body" are the same
-        starkAppMetadata: starkAppMetadata,
-        starkAppConfig: starkAppConfig,
+        starkAppMetadata: commonData.starkAppMetadata,
+        starkAppConfig: commonData.starkAppConfig,
         // xhtml: true, // TODO: why XHTML?
         minify: isProd ? {
           caseSensitive: true,
@@ -516,6 +497,5 @@ module.exports = function (options) {
       clearImmediate: false,
       setImmediate: false
     }
-
   };
-}
+};

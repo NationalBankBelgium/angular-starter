@@ -6,6 +6,7 @@ const helpers = require('./helpers');
 const buildUtils = require('./build-utils');
 const webpackMerge = require('webpack-merge'); // used to merge webpack configs
 const commonConfig = require('./webpack.common.js'); // the settings that are common to prod and dev
+const commonData = require('./webpack.common-data.js'); // the settings that are common to prod and dev
 
 /**
  * Webpack Plugins
@@ -172,22 +173,7 @@ module.exports = function () {
               loader: "postcss-loader",
               options: {
                 sourceMap: true,
-                plugins: [
-                  // reference: https://github.com/postcss/postcss-import
-                  // https://github.com/postcss/postcss-import/issues/244
-                  require("postcss-import")(),
-
-                  // plugin to rebase, inline or copy on url().
-                  // https://github.com/postcss/postcss-url
-                  require("postcss-url")(),
-
-                  require("postcss-nesting")(),
-                  require("postcss-simple-extend")(),
-                  require("postcss-cssnext")({
-                    // see https://github.com/MoOx/postcss-cssnext/issues/268 for example
-                    browsers: ["last 3 versions", "Chrome >= 45"]
-                  })
-                ]
+                plugins: commonData.postcssPlugins
               }
             }
           ],
@@ -243,8 +229,6 @@ module.exports = function () {
        * See: https://www.npmjs.com/package/write-file-webpack-plugin
        */
       new WriteFilePlugin(),
-
-      // TODO: HMR
     ],
 
     /**
