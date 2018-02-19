@@ -2,7 +2,7 @@ import {
   Component,
   OnInit
 } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Params } from '@angular/router';
 
 @Component({
   selector: 'about',
@@ -30,13 +30,23 @@ export class AboutComponent implements OnInit {
   ) {}
 
   public ngOnInit() {
+    /**
+     * Getting the params values
+     */
+    this.route
+      .params
+      .subscribe((params: Params) => {
+        this.localState = {...this.localState, paramData: params.paramData};
+      });
+
+    /**
+     * Getting the resolves values
+     */
     this.route
       .data
       .subscribe((data: any) => {
-        /**
-         * Your resolved data from route.
-         */
-        this.localState = data.yourData;
+        console.warn('data resolved');
+        this.localState = {...this.localState, ...data.resolvedData};
       });
 
     console.log('hello `About` component');
@@ -59,7 +69,7 @@ export class AboutComponent implements OnInit {
       System.import('../../assets/mock-data/mock-data.json')
         .then((json) => {
           console.log('async mockData', json);
-          this.localState = json;
+          this.localState = {...this.localState, asyncData: json};
         });
 
     });

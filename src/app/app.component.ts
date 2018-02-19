@@ -33,7 +33,8 @@ import { AppState } from './app.service';
         routerLinkActive="active" [routerLinkActiveOptions]= "{exact: true}">
         Barrel
       </a>
-      <a [routerLink]=" ['./about'] "
+      <!-- TODO: NgRouter always passes params in the URL, how to pass non-URL params? objects? -->
+      <a [routerLink]=" ['./about', 'data passed via params'] "
         routerLinkActive="active" [routerLinkActiveOptions]= "{exact: true}">
         About
       </a>
